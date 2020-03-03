@@ -1,0 +1,128 @@
+<AnalyzerButtons>
+    size_hint_y:0.075
+
+    Widget:
+    Button:
+        text:'Palaa Päävalikkoon'
+        on_release:root.exit()
+        size_hint_x:None
+        font_size:self.height
+        width:(self.font_size*12)
+        markup:True
+        #background_normal:""
+        #background_color:1,1,1,1
+        #color:.2,.5,.2,1
+    Widget:
+
+
+<AnalyzerScreen>
+    canvas.before:
+        Color:
+            rgba:1,1,1,1
+        Rectangle:
+            size:self.size
+
+<Analyzer>
+
+    cols:7
+    spacing:10
+<DayView>
+    canvas.before:
+        Color:
+            rgba:1,1,1,1
+        Rectangle:
+            size:self.size
+            pos:self.pos
+
+    spacing:20
+    padding:20
+<DayViewElement>
+    background_normal:""
+
+<MonthViewWorkDay>
+
+    on_release:root.parent.parent.parent.click(self.workday)
+    background_normal:""
+    data:"x"
+    day:"b"
+
+    Label:
+        text:self.parent.day
+        x:self.parent.x
+        font_size:self.parent.height/4
+        width:(self.font_size*len(self.text)*0.6)+5
+        height:self.font_size
+        y:self.parent.y+self.parent.height-self.height
+
+
+    Label:
+        text:self.parent.data
+        center:self.parent.center
+        font_size:self.parent.height/5
+
+
+
+<DayPopExit>
+    on_release:root.parent.dismiss()
+    size_hint_y:None
+    height:30
+    text:"Takaisin"
+    #background_normal:""
+    #background_color:0,0,0,0
+    font_size:self.height
+    #color:.2,.6,.2,1
+
+
+
+
+<TopMenuScreen>
+
+    canvas.before:
+        Color:
+            rgba:1,1,1,1
+        Rectangle:
+            size:self.size
+
+    BoxLayout:
+        size: (root.width*.4,root.height*.4)
+        size_hint: (None,None)
+        center:root.center
+        orientation:'vertical'
+        spacing: 100
+        Button:
+            text:'[b]LUE PDF[/b]'
+            on_release: root.show_load()
+            font_size:self.height
+            markup:True
+            #background_normal:""
+            #background_color:.3,.7,.3,1
+
+        Button:
+            text:'[b]POISTU[/b]'
+            on_release: root.exit()
+            font_size:self.height
+            markup:True
+            #background_normal:""
+            #background_color:.7,.3,.3,1
+
+
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            path: "/home/jopeha/PycharmProjects/Palkantarkastaja/new_pdf"
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
+
+
