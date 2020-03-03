@@ -1,5 +1,5 @@
 # Palkantarkastaja
-Lukee staffpointin palkkalaskelman pdf:stä ja tuo sen paremmin ihmisen ymmärrettävään muotoon kivy käyttöliittymään.
+Lukee staffpointin palkkalaskelman pdf:stä ja näyttää sen ihmiselle ymmärrettävässä muodossa [kivy](https://kivy.org) pohjaisessa käyttöliittymässä.
 
 ![](pdf_kuva.jpg)
 
