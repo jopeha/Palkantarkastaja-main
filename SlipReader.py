@@ -330,7 +330,6 @@ class Analyzer:
             self.work_days.append(WorkDay(elements_by_days[day],day))
 
         self.total_wage=sum(i.total_wage for i in self.loaded_elements)
-        self.daily_total_wage=sum(i.total_wage for i in self.work_days)
 
         self.total_wage_hourly=sum(i.calculated_total_wage for i in self.loaded_elements)
         self.total_hours=sum(i.total_hours for i in self.work_days)

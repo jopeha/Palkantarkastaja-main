@@ -4,6 +4,7 @@ from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.popup import Popup
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager,Screen
@@ -31,8 +32,8 @@ class TopMenuScreen(Screen):
         print(filename,"NAM")
         full_path=os.path.join(filename[0])
         json_path=funcs["load_pdf"](full_path)
-        analyzer=funcs["load_json"](json_path)
-        AS=AnalyzerScreen(analyzer)
+        analyzer_json=funcs["load_json"](json_path)
+        AS=AnalyzerScreen(analyzer_json)
         self.manager.switch_to(AS)
         self.manager.top_menu=self
 
@@ -51,11 +52,19 @@ class AnalyzerScreen(Screen):
 
     def __init__(self,analyzer):
         super().__init__()
+
+        self.info=[ f"Kuukauden palkka: {analyzer.total_wage:.2f} " ,
+              f"Keskituntipalkka: {analyzer.average_hourly_wage:.2f}({analyzer.average_hourly_wage_net:.2f}) ",
+              f"Työpäivien määrä: {len(analyzer.work_days)}"]
         self.month_name=""
         self.mainbox=BoxLayout(padding=100,orientation='vertical',spacing=20)
         self.analyzer=Analyzer()
         self.analyzer.load(analyzer)
         self.mainbox.add_widget(Label(text=self.analyzer.month_name,size_hint_y=None,height=30, color=(.2,.5,.2,1),font_size=50))
+        b=BoxLayout(size_hint_y=None,height=30)
+        for string in self.info:
+            b.add_widget(Label(text=string, size_hint_y=None, height=30, color=(.2*1.3, .5*1.2, .2*1.3, 1), font_size=25))
+        self.mainbox.add_widget(b)
         self.mainbox.add_widget(self.analyzer)
 
         self.buttons=AnalyzerButtons()
@@ -65,6 +74,7 @@ class AnalyzerScreen(Screen):
         self.buttons.exit=partial(self.exit_button,self)
 
         self.add_widget(self.mainbox)
+
 
     def click(self,workday):
         if isinstance(workday,int):
@@ -100,7 +110,7 @@ class Analyzer(GridLayout):
     def load(self,analyzer):
         weekdays=["Ma","Ti","Ke","To","Pe","La","Su"]
         for i in range(7):
-            self.add_widget(Label(text=weekdays[i],height=30,size_hint_y=None))#,color=(.2,.5,.2,1)))
+            self.add_widget(Label(text=weekdays[i],height=30,size_hint_y=None,color=(.2,.5,.2,1)))
 
         year=analyzer.year
         month=analyzer.month
@@ -132,22 +142,28 @@ class Analyzer(GridLayout):
         for _ in range(6-date(year,month,calendar.monthrange(year,month)[1]).weekday()):
             self.add_widget(Label())
 
-        if len(included)<len(analyzer.work_days):
-            for _ in range(3):
-                self.add_widget(Label(height=30,size_hint_y=None))
-            self.add_widget(Label(text="Muut Lisät:",height=30,size_hint_y=None,font_size=30))#,color=(.2,.5,.2,1)))
-            for _ in range(3):
-                self.add_widget(Label(height=30,size_hint_y=None))
+        for _ in range(3):
+            self.add_widget(Label(height=30,size_hint_y=None))
+        self.add_widget(Label(text="Muut:",height=30,size_hint_y=None,font_size=30,color=(.2,.5,.2,1)))
+        for _ in range(3):
+            self.add_widget(Label(height=30,size_hint_y=None))
+        for day in analyzer.work_days:
+            if day not in included:
+                self.add_widget(MonthViewWorkDay(day,other=True))
 
-            for day in analyzer.work_days:
-                if day not in included:
-                    self.add_widget(MonthViewWorkDay(day,other=True))
+        self.add_widget(MonthViewWorkDay(SpecialElementsDay(analyzer.special_elements),special=True))
 
+class SpecialElementsDay:
 
+    def __init__(self,elements):
+        self.elements=elements
+        self.total_wage=sum(i.total_wage for i in self.elements)
+        self.work_type="special"
+        self.date="Muut rivit"
 
 class MonthViewWorkDay(Button):
 
-    def __init__(self,workday,past=False,other=False):
+    def __init__(self,workday,past=False,other=False,special=False):
         super().__init__()
         self.workday=workday
         if isinstance(workday,int):
@@ -157,6 +173,10 @@ class MonthViewWorkDay(Button):
                 self.work_type="None"
             self.day=str(workday)
             self.data=self.work_type
+        elif special:
+            self.day="Muut lisät"
+            self.data=f"{workday.total_wage}"
+            self.work_type="other"
         elif other:
             self.day=f"{workday.datetime.date():%d.%m}"
             self.data = f"{workday.start_time:%H:%M}-{workday.end_time:%H:%M}\n" \
@@ -202,10 +222,11 @@ class LoadDialog(FloatLayout):
 class DayView(BoxLayout):
     orientation = "vertical"
     def load(self,workday):
+        if workday.work_type=="special":
+            elements=workday.elements
+        else:
+            elements=sorted(workday.elements,key=lambda a: a.start_time)
 
-        elements=sorted(workday.elements,key=lambda a: a.start_time)
-
-        time_range=min(i.start_time for i in workday.elements),max(i.end_time for i in workday.elements)
 
         for element in elements:
             self.add_widget(DayViewElement(element))
@@ -219,25 +240,30 @@ class DayViewElement(Button):
 
     def __init__(self,element):
         super().__init__()
-        name1=element.name
-        name2=element.name2
-        hourly_wage=element.hourly_wage
-        total_wage=element.total_wage
-        time=element.time
-        st=element.start_time
-        et=element.end_time
-        self.size_hint_y=.1
-        self.text=f"{name1} --" \
-                  f"{name2}  :  " \
-                  f"{st} - {et}, " \
-                  f"{time}h - tuntipalkka {hourly_wage}€ - " \
-                  f"palkka {total_wage}"
-        if "Tuntipalkka" in name2:
-            self.background_color=(.3,.7,.3,1)
-        elif "Sairasloma" in name2:
-            self.background_color=(.7,.3,.7,1)
+
+        if element.type=="special":
+            self.text=f"{element.name} - {element.total_wage}"
+            self.background_color = (.3, .3, .7, 1)
         else:
-            self.background_color=(.3,.3,.7,1)
+            name1 = element.name
+            name2=element.name2
+            hourly_wage=element.hourly_wage
+            total_wage=element.total_wage
+            time=element.time
+            st=element.start_time
+            et=element.end_time
+            self.size_hint_y=.1
+            self.text=f"{name1} --" \
+                      f"{name2}  :  " \
+                      f"{st} - {et}, " \
+                      f"{time}h - tuntipalkka {hourly_wage}€ - " \
+                      f"palkka {total_wage}"
+            if "Tuntipalkka" in name2:
+                self.background_color=(.3,.7,.3,1)
+            elif "Sairasloma" in name2:
+                self.background_color=(.7,.3,.7,1)
+            else:
+                self.background_color=(.3,.3,.7,1)
 
 class SlipCheckerApp(App):
 
