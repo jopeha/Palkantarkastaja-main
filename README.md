@@ -7,6 +7,6 @@ Käyttää [tabula-py:ta](https://pypi.org/project/tabula-py/) lukeakseen pdf ti
 
 ![](peek_slipread2.gif)
 
-## Muuta
+## Kesken
 
-TeleReader.py ja WageMaker.py eivät ole käytettävissä kivy ulkoasusta. TeleReader.py on selenium pohjainen web scraperi joka hakee tiedot toteutuneista vuoroista työnajanseurantajärjestelmä teleoptista ja WageMaker.py laskee toteutuneiden vuorojen pohjalta oikean palkan lisineen. WageMaker on vielä keskeneräinen.
+Selenium pohjainen web scraperi joka hakee tiedot toteutuneista vuoroista työnajanseurantajärjestelmä teleoptista ja laskee toteutuneiden vuorojen pohjalta oikean palkan lisineen jotta ohjelma voi suoraan kertoa puuttuuko joitan palkkoja tai lisiä.
